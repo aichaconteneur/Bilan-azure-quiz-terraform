@@ -1,0 +1,36 @@
+owner = "aicha-conteneur"
+
+project = "azuretech"
+
+environment = "dev"
+
+location = "francecentral"
+
+resource_group_name = "aidialloRG"
+
+shared_rg_name = "rg-shared-prf2026"
+
+shared_plan_name = "plan-npr-prf2026"
+
+github_repository = "aichaconteneur/Bilan-azure-quiz-terraform"
+
+github_branch = "main"
+
+postgres_version        = "16"
+postgres_sku_name       = "B_Standard_B1ms"
+postgres_storage_mb     = 32768
+postgres_admin_username = "postgresadmin"
+postgres_database_name  = "appdb"
+
+redis_sku_name = "Balanced_B3"
+
+static_webapp_sku = "Free"
+
+backend_docker_image = "quiz-backend:latest"
+
+tags = {
+  owner       = "aicha-conteneur"
+  project     = "azuretech"
+  environment = "dev"
+  managed_by  = "terraform"
+}
