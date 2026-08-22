@@ -14,18 +14,6 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "sku_name" {
-  type = string
-}
-
 variable "tags" {
   type = map(string)
-}
-
-variable "private_endpoint_subnet_id" {
-  type = string
-}
-
-variable "redis_private_dns_zone_id" {
-  type = string
 }

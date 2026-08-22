@@ -12,6 +12,12 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
 
   zone = "1"
 
+  delegated_subnet_id = var.delegated_subnet_id
+  private_dns_zone_id = var.private_dns_zone_id
+
+  # Désactive l'accès public : obligatoire avec un subnet délégué
+  public_network_access_enabled = false
+
   tags = var.tags
 }
 

@@ -21,6 +21,9 @@ module "keyvault" {
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
 
+  private_endpoint_subnet_id = module.network.private_endpoint_subnet_id
+  private_dns_zone_id        = module.network.keyvault_private_dns_zone_id
+
   tags = local.tags
 }
 
@@ -35,13 +38,17 @@ module "postgres" {
   postgres_version = var.postgres_version
   sku_name         = var.postgres_sku_name
   storage_mb       = var.postgres_storage_mb
-  admin_username   = var.postgres_admin_username
-  admin_password   = var.postgres_admin_password
-  database_name    = var.postgres_database_name
+
+  admin_username = var.postgres_admin_username
+  admin_password = var.postgres_admin_password
+
+  database_name = var.postgres_database_name
+
+  delegated_subnet_id = module.network.postgres_subnet_id
+  private_dns_zone_id = module.network.postgres_private_dns_zone_id
 
   tags = local.tags
 }
-
 module "redis" {
   source = "./modules/redis"
 
@@ -52,15 +59,30 @@ module "redis" {
 
   sku_name = var.redis_sku_name
 
+  private_endpoint_subnet_id = module.network.private_endpoint_subnet_id
+  redis_private_dns_zone_id  = module.network.redis_private_dns_zone_id
+
   tags = local.tags
 }
-
 module "storage" {
   source = "./modules/storage"
 
   owner               = var.owner
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = var.location
+
+  private_endpoint_subnet_id = module.network.private_endpoint_subnet_id
+  private_dns_zone_id        = module.network.storage_blob_private_dns_zone_id
+
+  tags = local.tags
+}
+module "network" {
+  source = "./modules/network"
+
+  project             = var.project
+  environment         = var.environment
+  location            = var.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   tags = local.tags
 }
@@ -79,10 +101,11 @@ module "app_service" {
   container_registry_login_server = module.container_registry.login_server
   docker_image_name               = var.backend_docker_image
 
-  keyvault_name        = module.keyvault.keyvault_name
-  postgres_host        = module.postgres.postgres_fqdn
-  redis_host           = module.redis.redis_hostname
-  storage_account_name = module.storage.storage_account_name
+  keyvault_name         = module.keyvault.keyvault_name
+  postgres_host         = module.postgres.postgres_fqdn
+  redis_host            = module.redis.redis_hostname
+  storage_account_name  = module.storage.storage_account_name
+  app_service_subnet_id = module.network.app_service_subnet_id
 
   tags = local.tags
 }
@@ -145,4 +168,33 @@ resource "azurerm_key_vault_secret" "redis_password" {
   name         = "redis-password"
   value        = module.redis.redis_primary_access_key
   key_vault_id = module.keyvault.keyvault_id
+}
+
+resource "azurerm_key_vault_secret" "postgres_host" {
+  name         = "postgres-host"
+  value        = module.postgres.postgres_fqdn
+  key_vault_id = module.keyvault.keyvault_id
+
+  tags = local.tags
+}
+
+resource "azurerm_key_vault_secret" "postgres_jdbc_url" {
+  name         = "postgres-jdbc-url"
+  value        = "jdbc:postgresql://${module.postgres.postgres_fqdn}:5432/${var.postgres_database_name}?sslmode=require"
+  key_vault_id = module.keyvault.keyvault_id
+
+  tags = local.tags
+}
+
+resource "random_password" "backend_api_key" {
+  length  = 32
+  special = false
+}
+
+resource "azurerm_key_vault_secret" "backend_api_key" {
+  name         = "backend-api-key"
+  value        = random_password.backend_api_key.result
+  key_vault_id = module.keyvault.keyvault_id
+
+  tags = local.tags
 }

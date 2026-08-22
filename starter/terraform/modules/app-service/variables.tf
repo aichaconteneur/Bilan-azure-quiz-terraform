@@ -49,3 +49,7 @@ variable "storage_account_name" {
 variable "tags" {
   type = map(string)
 }
+
+variable "app_service_subnet_id" {
+  type = string
+}
