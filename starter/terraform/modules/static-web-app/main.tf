@@ -6,5 +6,7 @@ resource "azurerm_static_web_app" "frontend" {
   sku_tier = var.sku
   sku_size = var.sku
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    component = "frontend"
+  })
 }

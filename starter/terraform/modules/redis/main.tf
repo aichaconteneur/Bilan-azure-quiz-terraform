@@ -16,7 +16,9 @@ resource "azurerm_managed_redis" "redis" {
     client_protocol = "Encrypted"
   }
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    component = "redis"
+  })
 }
 
 resource "azurerm_private_endpoint" "redis" {
@@ -37,5 +39,7 @@ resource "azurerm_private_endpoint" "redis" {
     private_dns_zone_ids = [var.redis_private_dns_zone_id]
   }
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    component = "redis-private-endpoint"
+  })
 }

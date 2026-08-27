@@ -57,5 +57,7 @@ resource "azurerm_linux_web_app" "backend" {
     STORAGE_ACCOUNT_NAME = var.storage_account_name
   }
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    component = "backend"
+  })
 }

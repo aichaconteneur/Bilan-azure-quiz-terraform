@@ -6,5 +6,7 @@ resource "azurerm_container_registry" "acr" {
   sku           = "Basic"
   admin_enabled = false
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    component = "registry"
+  })
 }

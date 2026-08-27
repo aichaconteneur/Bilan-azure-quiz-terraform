@@ -18,7 +18,9 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   # Désactive l'accès public : obligatoire avec un subnet délégué
   public_network_access_enabled = false
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    component = "postgres"
+  })
 }
 
 resource "azurerm_postgresql_flexible_server_database" "database" {
@@ -27,4 +29,5 @@ resource "azurerm_postgresql_flexible_server_database" "database" {
 
   charset   = "UTF8"
   collation = "en_US.utf8"
+
 }
