@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Create terraform.tfvars
         run: cp terraform.tfvars.example terraform.tfvars
@@ -117,7 +117,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Create terraform.tfvars
         run: cp terraform.tfvars.example terraform.tfvars
