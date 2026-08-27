@@ -13,7 +13,7 @@ L'architecture sépare trois parties principales :
 - les services de données et de sécurité Azure.
 
 
-![Architecture Azure Quiz](docs/ARCHITECTURE/architecture.jpg)
+![Architecture Azure Quiz](architecture.jpg)
 ---
 
 ## 2. Frontend
