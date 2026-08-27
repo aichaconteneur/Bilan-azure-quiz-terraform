@@ -12,8 +12,8 @@ L'architecture sépare trois parties principales :
 - le backend Spring Boot ;
 - les services de données et de sécurité Azure.
 
-![Architecture Azure Quiz](docs/ARCHITECTURE/architecture.jpg)
 
+![Architecture Azure Quiz](docs/ARCHITECTURE/architecture.jpg)
 ---
 
 ## 2. Frontend
