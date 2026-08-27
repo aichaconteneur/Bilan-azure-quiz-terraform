@@ -1,0 +1,134 @@
+# ADR-002 — Sécurité réseau et protection du backend
+- **Décision :** Sécuriser le backend et limiter l'accès aux services Azure
+
+## Contexte
+
+L'application Azure Quiz est composée d'un frontend Angular hébergé dans Azure Static Web Apps et d'un backend Spring Boot hébergé dans Azure App Service.
+
+Le frontend doit être accessible depuis Internet.
+
+Le backend doit communiquer avec plusieurs services Azure :
+
+- PostgreSQL ;
+- Azure Managed Redis ;
+- Storage Account ;
+- Azure Key Vault ;
+- Azure Container Registry.
+
+L'objectif est de limiter l'exposition des ressources tout en permettant au frontend de communiquer avec le backend.
+
+## Décision
+
+Le frontend Azure Static Web Apps constitue le point d'entrée public de l'application.
+
+Le backend Azure App Service utilise une intégration VNet pour communiquer avec les services Azure privés.
+
+L'accès applicatif au backend est protégé par :
+
+- HTTPS ;
+- un CORS limité à l'origine du frontend ;
+- une clé API vérifiée par le backend.
+
+Les secrets applicatifs sont stockés dans Azure Key Vault.
+
+L'App Service utilise une identité managée et Azure RBAC pour accéder aux ressources Azure autorisées.
+
+## Gestion du CORS
+
+L'adresse de la Static Web App peut être générée par Azure.
+
+Elle ne doit donc pas être codée en dur dans la configuration Terraform.
+
+Le module Static Web App expose son hostname :
+
+`static_web_app_url`
+
+Terraform transmet ensuite cette valeur au module App Service :
+
+`frontend_url = "https://${module.static_web_app.static_web_app_url}"`
+
+L'App Service reçoit finalement cette valeur dans :
+
+`FRONTEND_URL`
+
+Le backend peut ainsi limiter le CORS à l'origine exacte du frontend.
+
+Si la Static Web App est recréée avec une nouvelle adresse, Terraform met automatiquement à jour la configuration du backend.
+
+## Gestion des secrets
+
+Azure Key Vault centralise les secrets nécessaires à l'application.
+
+Il contient notamment :
+
+- les identifiants PostgreSQL ;
+- l'URL JDBC PostgreSQL ;
+- les informations nécessaires à Redis ;
+- la clé API du backend.
+
+Les secrets ne sont pas stockés directement dans le code source.
+
+## Identité et autorisations
+
+L'App Service possède une identité managée.
+
+Les autorisations nécessaires sont attribuées avec Azure RBAC.
+
+Cette approche permet de limiter l'utilisation d'identifiants statiques pour accéder aux ressources Azure.
+
+## Réseau
+
+Le backend utilise l'intégration VNet.
+
+Les services de données sont configurés afin de réduire leur exposition publique.
+
+PostgreSQL est configuré sans accès réseau public.
+
+Le Storage Account utilise HTTPS uniquement et TLS 1.2 minimum.
+
+Key Vault est utilisé pour protéger les secrets de l'application.
+
+## Alternatives étudiées
+
+### CORS avec toutes les origines
+
+L'utilisation de `*` permettrait à n'importe quelle origine d'appeler le backend.
+
+Cette solution n'a pas été retenue car elle ne limite pas les appels au frontend attendu.
+
+### Secrets dans le code source
+
+Cette solution a été rejetée car elle exposerait les informations sensibles dans Git.
+
+Azure Key Vault est utilisé à la place.
+
+### URL du frontend codée en dur
+
+Cette solution a également été rejetée.
+
+Une recréation de la Static Web App peut modifier son hostname.
+
+Terraform récupère donc automatiquement l'adresse du frontend.
+
+## Conséquences
+
+### Avantages
+
+- réduction de l'exposition des services Azure ;
+- secrets centralisés dans Key Vault ;
+- utilisation d'une identité managée ;
+- autorisations contrôlées avec Azure RBAC ;
+- CORS limité au frontend ;
+- URL frontend synchronisée automatiquement par Terraform.
+
+### Limites
+
+Le backend App Service conserve une URL publique afin de permettre la communication avec Azure Static Web Apps.
+
+La protection du backend repose donc également sur des contrôles applicatifs, notamment le CORS et la clé API.
+
+## Conclusion
+
+Cette stratégie permet de protéger les services de données tout en conservant la communication nécessaire entre le frontend et le backend.
+
+La séparation des responsabilités entre Terraform et les pipelines CI/CD est documentée dans l'ADR-003.

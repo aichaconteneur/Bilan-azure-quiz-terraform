@@ -1,0 +1,135 @@
+# ADR-003 — Séparation des responsabilités Terraform et CI/CD
+
+- **Décision :** Séparer la gestion de l'infrastructure des déploiements applicatifs
+
+## Contexte
+
+Le projet Azure Quiz utilise Terraform pour gérer l'infrastructure Azure et GitHub Actions pour automatiser les contrôles et les déploiements.
+
+Terraform et les pipelines CI/CD peuvent modifier certaines propriétés des mêmes ressources Azure.
+
+Il est donc nécessaire de définir clairement les responsabilités de chaque outil afin d'éviter les conflits de configuration.
+
+## Décision
+
+Les responsabilités sont séparées entre :
+
+- Terraform pour l'infrastructure ;
+- la CI pour les contrôles de qualité et de sécurité ;
+- le CD pour les déploiements applicatifs.
+
+## Responsabilités de Terraform
+
+Terraform est responsable de la création et de la configuration des ressources Azure :
+
+- réseau Azure ;
+- Azure Static Web Apps ;
+- Azure App Service ;
+- Azure Container Registry ;
+- PostgreSQL ;
+- Azure Managed Redis ;
+- Storage Account ;
+- Azure Key Vault ;
+- identités managées ;
+- rôles Azure RBAC ;
+- tags des ressources.
+
+Terraform constitue la source de vérité pour l'infrastructure.
+
+## CI/CD du backend
+
+Le pipeline backend est responsable de :
+
+- compiler l'application Spring Boot ;
+- exécuter les tests ;
+- effectuer les contrôles de sécurité ;
+- construire l'image Docker ;
+- publier l'image dans Azure Container Registry ;
+- déployer l'image sur Azure App Service.
+
+Les images Docker peuvent être identifiées avec le SHA du commit Git afin de conserver la traçabilité du déploiement.
+
+## CI/CD du frontend
+
+Le pipeline frontend est responsable de :
+
+- installer les dépendances ;
+- exécuter le lint ;
+- vérifier le formatage ;
+- exécuter les tests ;
+- analyser les dépendances ;
+- détecter les secrets ;
+- construire l'application Angular ;
+- déployer le frontend dans Azure Static Web Apps.
+
+## Authentification Azure
+
+Les pipelines GitHub Actions utilisent OIDC pour s'authentifier auprès d'Azure.
+
+Cette solution évite de stocker un mot de passe permanent de Service Principal dans GitHub.
+
+Les informations nécessaires à l'authentification sont configurées dans les secrets GitHub.
+
+## Identification des ressources
+
+Les ressources Azure sont identifiées à l'aide de tags.
+
+Les pipelines peuvent notamment utiliser :
+
+- `owner`
+- `component`
+
+Exemples :
+
+`component = frontend`
+
+`component = backend`
+
+`component = registry`
+
+Cette approche réduit la dépendance aux noms de ressources codés en dur dans les workflows.
+
+## Gestion de l'image Docker
+
+Le pipeline CD backend est responsable de la version de l'image Docker réellement déployée.
+
+Terraform configure initialement le conteneur App Service, mais ne doit pas remplacer une image déployée ultérieurement par le pipeline CD.
+
+Un `lifecycle.ignore_changes` est donc utilisé sur la propriété de l'image Docker concernée.
+
+Cela évite qu'un futur `terraform apply` remplace involontairement la version déployée par le pipeline.
+
+## Alternatives étudiées
+
+### Déployer les applications uniquement avec Terraform
+
+Cette solution créerait un couplage important entre les changements applicatifs et l'infrastructure.
+
+Elle n'a pas été retenue.
+
+### Gérer l'infrastructure uniquement avec GitHub Actions
+
+Cette solution réduirait le caractère déclaratif et reproductible de l'infrastructure.
+
+Terraform reste donc responsable de l'infrastructure Azure.
+
+## Conséquences
+
+### Avantages
+
+- séparation claire des responsabilités ;
+- infrastructure reproductible ;
+- déploiements applicatifs indépendants ;
+- réduction des conflits entre Terraform et les pipelines ;
+- meilleure traçabilité des images Docker ;
+- authentification Azure sans secret permanent grâce à OIDC.
+
+### Limites
+
+Certaines propriétés modifiées par les pipelines doivent être explicitement ignorées par Terraform afin d'éviter les conflits de gestion.
+
+## Conclusion
+
+Terraform reste responsable de l'état de l'infrastructure Azure tandis que les pipelines CI/CD sont responsables de la validation et du déploiement des applications.
+
+Cette séparation permet de conserver une infrastructure déclarative tout en permettant des déploiements frontend et backend indépendants.

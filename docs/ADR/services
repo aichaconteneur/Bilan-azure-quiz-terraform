@@ -1,0 +1,96 @@
+# ADR-001 — Choix d'une architecture Azure en services managés
+- **Décision :** Utiliser Azure Static Web Apps et Azure App Service
+
+## Contexte
+
+L'application Azure Quiz est composée de deux parties principales :
+
+- un frontend Angular ;
+- un backend Java Spring Boot conteneurisé avec Docker.
+
+Deux approches d'hébergement Azure pouvaient être envisagées :
+
+1. un déploiement basé sur Kubernetes avec AKS ;
+2. une architecture basée sur des services Azure managés.
+
+L'objectif du projet est de disposer d'une infrastructure de non-production simple à maintenir, automatisée avec Terraform et compatible avec les pipelines CI/CD GitHub Actions.
+
+## Options étudiées
+
+### Option 1 — Azure Kubernetes Service (AKS)
+
+Cette solution permettrait de déployer les composants applicatifs dans Kubernetes.
+
+Elle offrirait davantage de contrôle sur l'orchestration des conteneurs et le réseau.
+
+Cependant, elle nécessiterait également de gérer davantage de composants Kubernetes :
+
+- Namespace ;
+- Deployment ;
+- Service ;
+- Ingress ;
+- configuration réseau ;
+- maintenance du déploiement Kubernetes.
+
+Cette complexité supplémentaire n'était pas nécessaire pour les besoins actuels de l'application.
+
+### Option 2 — Services Azure managés
+
+Cette solution repose sur :
+
+- **Azure Static Web Apps** pour le frontend Angular ;
+- **Azure App Service** pour le backend Spring Boot ;
+- **Azure Container Registry** pour stocker l'image Docker du backend.
+
+Les services de données nécessaires à l'application sont également fournis par Azure :
+
+- PostgreSQL Flexible Server ;
+- Azure Managed Redis ;
+- Azure Storage Account ;
+- Azure Key Vault.
+
+## Décision
+
+L'architecture basée sur les **services Azure managés** a été retenue.
+
+Le frontend Angular est hébergé dans Azure Static Web Apps.
+
+Le backend Spring Boot est construit sous forme d'image Docker, stocké dans Azure Container Registry puis exécuté dans Azure App Service.
+
+Terraform est utilisé pour créer et configurer l'infrastructure Azure.
+
+## Justification
+
+Cette solution a été choisie car elle permet :
+
+- de réduire la complexité d'exploitation ;
+- d'utiliser des services PaaS administrés par Azure ;
+- de séparer clairement le frontend et le backend ;
+- d'intégrer facilement Terraform et GitHub Actions ;
+- de conserver le backend sous forme de conteneur Docker ;
+- d'utiliser les services Azure adaptés aux besoins de l'application.
+
+Cette architecture est suffisante pour l'environnement de non-production du projet.
+
+## Conséquences
+
+### Avantages
+
+- architecture plus simple qu'un cluster Kubernetes ;
+- moins de composants à administrer ;
+- déploiement automatisable avec GitHub Actions ;
+- infrastructure reproductible avec Terraform ;
+- frontend et backend indépendants ;
+- utilisation de services Azure managés.
+
+### Limites
+
+- moins de contrôle sur l'infrastructure qu'avec AKS ;
+- dépendance aux fonctionnalités proposées par les services PaaS Azure ;
+- certaines contraintes réseau doivent être prises en compte entre Azure Static Web Apps et le backend.
+
+## Conclusion
+
+Le choix des services Azure managés permet d'obtenir une architecture adaptée aux besoins de l'application tout en limitant la complexité opérationnelle.
+
+Les aspects liés à la sécurité réseau et à la protection du backend sont détaillés dans l'ADR-002.
