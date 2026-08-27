@@ -14,6 +14,7 @@ L'architecture sépare trois parties principales :
 
 
 ![Architecture Azure Quiz](architecture.jpg)
+![ARCHITECTURE DRAW.IO](1-draw.jpg)
 ---
 
 ## 2. Frontend
