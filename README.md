@@ -54,7 +54,7 @@ Backend Spring Boot
     +---- Azure Container Registry
 ```
 
-![Architecture Azure Quiz](1PNG.png)
+![Architecture Azure Quiz](1.jpg)
 
 
 ---
