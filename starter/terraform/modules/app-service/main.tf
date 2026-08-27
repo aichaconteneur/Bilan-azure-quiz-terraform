@@ -24,8 +24,7 @@ resource "azurerm_linux_web_app" "backend" {
     always_on                               = true
     minimum_tls_version                     = "1.2"
     container_registry_use_managed_identity = true
-
-    vnet_route_all_enabled = true
+    vnet_route_all_enabled                  = true
 
     application_stack {
       docker_image_name   = var.docker_image_name
@@ -34,12 +33,13 @@ resource "azurerm_linux_web_app" "backend" {
   }
 
   app_settings = {
-    WEBSITES_PORT = "8080"
+    WEBSITES_PORT                       = "8080"
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
 
     KEYVAULT_NAME          = var.keyvault_name
     SPRING_PROFILES_ACTIVE = "prod"
 
-    FRONTEND_URL = "https://jolly-sea-0e7797803.7.azurestaticapps.net"
+    FRONTEND_URL = var.frontend_url
 
     SPRING_DATASOURCE_URL      = "@Microsoft.KeyVault(VaultName=${var.keyvault_name};SecretName=postgres-jdbc-url)"
     SPRING_DATASOURCE_USERNAME = "@Microsoft.KeyVault(VaultName=${var.keyvault_name};SecretName=postgres-username)"
@@ -55,6 +55,12 @@ resource "azurerm_linux_web_app" "backend" {
     REDIS_PASSWORD    = "@Microsoft.KeyVault(VaultName=${var.keyvault_name};SecretName=redis-password)"
 
     STORAGE_ACCOUNT_NAME = var.storage_account_name
+  }
+
+  lifecycle {
+    ignore_changes = [
+      site_config[0].application_stack[0].docker_image_name
+    ]
   }
 
   tags = merge(var.tags, {

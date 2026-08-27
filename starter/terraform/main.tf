@@ -101,11 +101,14 @@ module "app_service" {
   container_registry_login_server = module.container_registry.login_server
   docker_image_name               = var.backend_docker_image
 
-  keyvault_name         = module.keyvault.keyvault_name
-  postgres_host         = module.postgres.postgres_fqdn
-  redis_host            = module.redis.redis_hostname
-  storage_account_name  = module.storage.storage_account_name
+  keyvault_name        = module.keyvault.keyvault_name
+  postgres_host        = module.postgres.postgres_fqdn
+  redis_host           = module.redis.redis_hostname
+  storage_account_name = module.storage.storage_account_name
+
   app_service_subnet_id = module.network.app_service_subnet_id
+
+  frontend_url = "https://${module.static_web_app.static_web_app_url}"
 
   tags = local.tags
 }

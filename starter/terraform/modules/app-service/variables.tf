@@ -53,3 +53,7 @@ variable "tags" {
 variable "app_service_subnet_id" {
   type = string
 }
+
+variable "frontend_url" {
+  type = string
+}

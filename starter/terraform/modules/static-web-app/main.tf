@@ -9,4 +9,11 @@ resource "azurerm_static_web_app" "frontend" {
   tags = merge(var.tags, {
     component = "frontend"
   })
+
+  lifecycle {
+    ignore_changes = [
+      repository_url,
+      repository_branch
+    ]
+  }
 }
